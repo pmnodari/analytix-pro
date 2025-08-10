@@ -1,0 +1,12 @@
+streamlit
+pandas
+yfinance
+PyPortfolioOpt
+pandas-ta
+plotly
+openpyxl
+matplotlib
+scikit-learn
+```3.  **En el futuro**, en lugar de instalar las librerías una por una, 
+simplemente podrás ejecutar `pip install -r requirements.txt` 
+para instalar todo lo necesario.
