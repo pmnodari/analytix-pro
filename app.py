@@ -16,7 +16,7 @@ import technical_analysis
 
 
 # --- 1. CONFIGURACIÓN DE LA PÁGINA Y ESTADO DE SESIÓN ---
-st.set_page_config(page_title="Análisis Financiero Pro", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Analytix Pro", layout="wide", initial_sidebar_state="expanded")
 
 # Inicializar st.session_state para guardar los resultados de la optimización entre ejecuciones.
 # Esto es clave para que el módulo de Análisis Técnico pueda acceder a los datos.
@@ -45,7 +45,7 @@ tipo_analisis = st.sidebar.radio("Seleccione una Opción",
 run_button = st.sidebar.button("Ejecutar Análisis")
 
 # --- 3. ÁREA PRINCIPAL ---
-st.title("Plataforma de Análisis Financiero")
+st.title("Analytix Pro")
 st.write("Use la barra lateral para configurar su análisis y presione 'Ejecutar Análisis'.")
 
 if run_button:
