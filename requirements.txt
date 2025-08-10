@@ -7,3 +7,4 @@ plotly
 openpyxl
 matplotlib
 scikit-learn
+numpy<2.0
