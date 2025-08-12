@@ -1,0 +1,17 @@
+# Archivo de configuración de tema para Analytix Pro
+
+[theme]
+# Un azul profesional como color primario para elementos interactivos
+primaryColor="#3b82f6"
+
+# Color de fondo principal (oscuro)
+backgroundColor="#0E1117"
+
+# Un gris más oscuro para la barra lateral
+secondaryBackgroundColor="#1f2937"
+
+# Color del texto (blanco)
+textColor="#FAFAFA"
+
+# Fuente estándar y legible
+font="sans serif"
