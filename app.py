@@ -1,4 +1,4 @@
-# app.py (Versión COMPLETA con integración del nuevo módulo de Análisis de Estrategia)
+# app.py (Versión Final de Prototipo con Guía para el Usuario)
 
 # --- BLOQUE 1: IMPORTACIONES Y CONFIGURACIÓN ---
 # Se importan las librerías necesarias para el funcionamiento de la aplicación.
@@ -9,17 +9,17 @@ import io
 import base64
 from pypfopt import expected_returns, risk_models, EfficientFrontier
 
-# Se importan TODOS los módulos, incluido el nuevo.
+# Se importan los módulos personalizados que contienen la lógica de cada tipo de análisis.
 import fundamental_analysis
 import portfolio_optimization
-import strategy_analysis # <- NUEVA IMPORTACIÓN
+import strategy_analysis
 import technical_analysis
 
 # Se configura el título de la pestaña del navegador, el layout y el estado inicial de la barra lateral.
 st.set_page_config(page_title="Analytix Pro", layout="wide", initial_sidebar_state="expanded")
 
 # Se inicializa una variable en el 'estado de la sesión' de Streamlit.
-# Esto permite que los datos persistan entre diferentes ejecuciones.
+# Esto permite que los datos persistan entre diferentes ejecuciones de la app.
 if 'optimization_results' not in st.session_state:
     st.session_state.optimization_results = None
 
@@ -39,7 +39,7 @@ def get_img_as_base64(file):
 # Se lee el logo y se convierte. Asume que hay un archivo 'logo.png' en la misma carpeta.
 img = get_img_as_base64("logo.png")
 
-# Se utiliza st.markdown con HTML y CSS para inyectar estilos personalizados.
+# Se utiliza st.markdown con HTML y CSS para inyectar estilos personalizados en la app.
 st.sidebar.markdown(f"""
     <style>
     .banner-container {{ text-align: center; margin-bottom: 25px; }}
@@ -58,6 +58,18 @@ st.sidebar.header("Configuración de Análisis")
 
 # --- BLOQUE 2.2: ENTRADAS Y CONTROLES DEL USUARIO ---
 tickers_input = st.sidebar.text_input("Ingrese los Tickers (separados por comas)", "AAPL, MSFT, GOOGL, JPM, V")
+
+# Se añade un expander con una guía clara sobre qué es un ticker.
+with st.sidebar.expander("💡 Ayuda: ¿Qué es un Ticker?"):
+    st.info("""
+    Un "Ticker" es el símbolo único de una empresa en la bolsa. Por ejemplo:
+    - **Apple Inc.** es `AAPL`
+    - **Microsoft Corp.** es `MSFT`
+    - **Coca-Cola Co.** es `KO`
+
+    Puedes encontrar el ticker de cualquier empresa buscándola en **Yahoo Finanzas**.
+    """)
+
 periodo = st.sidebar.selectbox("Seleccione el Período", ["1y", "2y", "5y", "10y", "max"], index=2)
 frecuencia = st.sidebar.radio("Frecuencia de Datos", ('Diario', 'Mensual'))
 intervalo = "1d" if frecuencia == 'Diario' else "1mo"
@@ -66,25 +78,61 @@ st.sidebar.subheader("Parámetros de Optimización y Backtesting")
 risk_free_rate = st.sidebar.number_input("Tasa Libre de Riesgo Anual (%)", value=2.0, step=0.1)
 risk_free_rate_decimal = risk_free_rate / 100.0
 
-# Se añade la nueva opción de análisis al menú.
-tipo_analisis = st.sidebar.radio("Seleccione una Opción", 
+# Se usa st.caption para añadir una breve descripción a cada opción.
+st.sidebar.write("**Seleccione una Opción:**")
+tipo_analisis = st.sidebar.radio("Tipo de Análisis", 
     (
         "Análisis Fundamental",                           
         "Optimización de Portafolio (Markowitz)",       
-        "Análisis y Backtesting de Estrategia", # <- NUEVA OPCIÓN
+        "Análisis y Backtesting de Estrategia", 
         "Análisis Técnico (Post-Optimización)",           
         "Descargar Precios"                               
-    ))
+    ), label_visibility="collapsed") # Oculta la etiqueta "Tipo de Análisis" para un look más limpio
 
+# Lógica para mostrar la descripción contextual de cada análisis.
+if tipo_analisis == "Análisis Fundamental":
+    st.sidebar.caption("Evalúa la salud financiera y el valor intrínseco de las empresas para responder: **¿Qué comprar?**")
+elif tipo_analisis == "Optimización de Portafolio (Markowitz)":
+    st.sidebar.caption("Calcula la combinación ideal de activos para maximizar el retorno ajustado al riesgo y responder: **¿Cuánto comprar?**")
+elif tipo_analisis == "Análisis y Backtesting de Estrategia":
+    st.sidebar.caption("Analiza la composición de tu portafolio y simula su rendimiento histórico para responder: **¿Por qué funciona esta estrategia?**")
+elif tipo_analisis == "Análisis Técnico (Post-Optimización)":
+    st.sidebar.caption("Analiza el momento del mercado para los activos de tu portafolio para responder: **¿Cuándo comprar?**")
+
+# Botón de acción principal.
 st.sidebar.markdown('<div class="cta-container">', unsafe_allow_html=True)
 run_button = st.sidebar.button("🚀 Ejecutar Análisis")
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
+
 # --- BLOQUE 3: ÁREA PRINCIPAL ---
-st.write("### Use la barra lateral para configurar su análisis y presione 'Ejecutar Análisis'.")
+# Define el contenido del área principal de la página.
+
+# --- CAMBIO CLAVE: MENSAJE DE BIENVENIDA MEJORADO ---
+# Se crea un contenedor para el mensaje de bienvenida, que solo se mostrará si el botón no ha sido presionado.
+welcome_area = st.container()
+with welcome_area:
+    st.title("Bienvenido a Analytix Pro")
+    st.markdown("""
+    Analytix Pro es su asistente de inversión personal, diseñado para guiarlo a través de un flujo de trabajo profesional para la toma de decisiones.
+
+    **Siga estos pasos para un análisis completo:**
+
+    1.  📊 **Análisis Fundamental:** Comience aquí para evaluar la calidad de las empresas que le interesan. **(¿Qué comprar?)**
+    2.  ⚖️ **Optimización de Portafolio:** Una vez que tenga sus empresas, descubra la mezcla perfecta para su portafolio. **(¿Cuánto comprar de cada una?)**
+    3.  🔬 **Análisis y Backtesting:** Valide su estrategia. Entienda su composición y compruebe su rendimiento histórico. **(¿Es una buena estrategia?)**
+    4.  📈 **Análisis Técnico:** Con su estrategia validada, determine el mejor momento para entrar al mercado. **(¿Cuándo comprar?)**
+
+    Use la **barra lateral** para configurar los parámetros y seleccionar un análisis. Luego, presione **'Ejecutar Análisis'**.
+    """)
+    st.markdown("---")
 
 # --- BLOQUE 4: LÓGICA DE EJECUCIÓN ---
+# Este bloque se ejecuta solo cuando el usuario presiona el botón "Ejecutar Análisis".
 if run_button:
+    # Se oculta el mensaje de bienvenida para dar espacio a los resultados.
+    welcome_area.empty()
+    
     # --- BLOQUE 4.1: VALIDACIÓN DE TICKERS ---
     tickers_original = [ticker.strip().upper() for ticker in tickers_input.split(",")]
     valid_tickers, invalid_tickers, ticker_names = [], [], {}
@@ -120,12 +168,8 @@ if run_button:
                     cleaned_weights = ef.clean_weights()
                     
                     st.session_state.optimization_results = {
-                        'all_prices': all_prices, 
-                        'ticker_names': ticker_names, 
-                        'valid_tickers': valid_tickers,
-                        'weights': cleaned_weights, 
-                        'periodo': periodo, 
-                        'intervalo': intervalo, 
+                        'all_prices': all_prices, 'ticker_names': ticker_names, 'valid_tickers': valid_tickers,
+                        'weights': cleaned_weights, 'periodo': periodo, 'intervalo': intervalo, 
                         'risk_free_rate_decimal': risk_free_rate_decimal
                     }
                     portfolio_optimization.display_page(close_prices, valid_tickers, frecuencia, risk_free_rate_decimal, ticker_names)
