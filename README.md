@@ -48,7 +48,6 @@ Este proyecto está desplegado y es accesible públicamente a través de Streaml
 
 **👉 [¡Prueba Analytix Pro aquí!](https://analytix-pro.streamlit.app/)**
 
-*(Nota: Reemplaza `ENLACE-A-TU-APP-STREAMLIT` con el enlace real una vez que hayas desplegado la aplicación).*
 
 ---
 

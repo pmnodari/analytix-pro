@@ -94,7 +94,7 @@ st.sidebar.markdown('</div>', unsafe_allow_html=True)
 if not st.session_state.analysis_started:
     st.title("Bienvenido a Analytix Pro")
     st.markdown("""
-    <div style="font-size: 24px;">
+    <div style="font-size: 18px;">
     Analytix Pro es su asistente de inversión personal, diseñado para guiarlo a través de un flujo de trabajo profesional para la toma de decisiones.
     <br><br>
     <strong>Siga estos pasos para un análisis completo:</strong>
@@ -108,7 +108,7 @@ if not st.session_state.analysis_started:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
-    
+
     # --- BLOQUE 2.3: AVISO DE COPYRIGHT ---
 st.sidebar.markdown("---")
 st.sidebar.info("© 2025 Analytix Pro. Todos los derechos reservados.")
