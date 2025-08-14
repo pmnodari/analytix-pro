@@ -1,6 +1,7 @@
 #  Analytix Pro 🚀
 
-(logo.png)
+
+![alt text](logo.png)
 
 **Analytix Pro** es una aplicación web de análisis de inversiones construida con Streamlit, diseñada para guiar a inversores de todos los niveles a través de un flujo de trabajo profesional para la toma de decisiones financieras. La herramienta integra análisis fundamental, optimización de portafolios (Teoría de Markowitz), análisis estratégico de sectores, backtesting de rendimiento histórico y análisis técnico de puntos de entrada.
 
@@ -45,7 +46,7 @@ La aplicación sigue un flujo de trabajo lógico para responder las preguntas cl
 
 Este proyecto está desplegado y es accesible públicamente a través de Streamlit Community Cloud.
 
-**👉 [¡Prueba Analytix Pro aquí!](ENLACE-A-TU-APP-STREAMLIT)**
+**👉 [¡Prueba Analytix Pro aquí!](https://analytix-pro.streamlit.app/)**
 
 *(Nota: Reemplaza `ENLACE-A-TU-APP-STREAMLIT` con el enlace real una vez que hayas desplegado la aplicación).*
 
