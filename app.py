@@ -108,6 +108,10 @@ if not st.session_state.analysis_started:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("---")
+    
+    # --- BLOQUE 2.3: AVISO DE COPYRIGHT ---
+st.sidebar.markdown("---")
+st.sidebar.info("© 2025 Analytix Pro. Todos los derechos reservados.")
 
 # --- BLOQUE 4: LÓGICA DE EJECUCIÓN ---
 if run_button:
