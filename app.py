@@ -1,7 +1,6 @@
-# app.py (Versión Final de Prototipo con Guía para el Usuario)
+# app.py (Versión Final con Lógica de Sesión para Bienvenida Dinámica)
 
 # --- BLOQUE 1: IMPORTACIONES Y CONFIGURACIÓN ---
-# Se importan las librerías necesarias para el funcionamiento de la aplicación.
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -9,37 +8,30 @@ import io
 import base64
 from pypfopt import expected_returns, risk_models, EfficientFrontier
 
-# Se importan los módulos personalizados que contienen la lógica de cada tipo de análisis.
 import fundamental_analysis
 import portfolio_optimization
 import strategy_analysis
 import technical_analysis
 
-# Se configura el título de la pestaña del navegador, el layout y el estado inicial de la barra lateral.
 st.set_page_config(page_title="Analytix Pro", layout="wide", initial_sidebar_state="expanded")
 
-# Se inicializa una variable en el 'estado de la sesión' de Streamlit.
-# Esto permite que los datos persistan entre diferentes ejecuciones de la app.
 if 'optimization_results' not in st.session_state:
     st.session_state.optimization_results = None
 
+# --- CAMBIO CLAVE 1: INICIALIZACIÓN DE LA BANDERA DE SESIÓN ---
+# Si nuestra bandera 'analysis_started' no existe en la memoria, la creamos y la ponemos en False.
+if 'analysis_started' not in st.session_state:
+    st.session_state.analysis_started = False
+
 # --- BLOQUE 2: BARRA LATERAL (SIDEBAR) ---
-# En esta sección se define todo el contenido de la barra lateral izquierda.
-
 # --- BLOQUE 2.1: BANNER DE MARCA Y ESTILOS GLOBALES ---
-# Este bloque se encarga de la identidad visual de la aplicación.
-
 @st.cache_data
 def get_img_as_base64(file):
-    """Función para leer una imagen local y convertirla a un string en base64."""
-    with open(file, "rb") as f:
-        data = f.read()
+    with open(file, "rb") as f: data = f.read()
     return base64.b64encode(data).decode()
 
-# Se lee el logo y se convierte. Asume que hay un archivo 'logo.png' en la misma carpeta.
 img = get_img_as_base64("logo.png")
 
-# Se utiliza st.markdown con HTML y CSS para inyectar estilos personalizados en la app.
 st.sidebar.markdown(f"""
     <style>
     .banner-container {{ text-align: center; margin-bottom: 25px; }}
@@ -59,14 +51,12 @@ st.sidebar.header("Configuración de Análisis")
 # --- BLOQUE 2.2: ENTRADAS Y CONTROLES DEL USUARIO ---
 tickers_input = st.sidebar.text_input("Ingrese los Tickers (separados por comas)", "AAPL, MSFT, GOOGL, JPM, V")
 
-# Se añade un expander con una guía clara sobre qué es un ticker.
 with st.sidebar.expander("💡 Ayuda: ¿Qué es un Ticker?"):
     st.info("""
     Un "Ticker" es el símbolo único de una empresa en la bolsa. Por ejemplo:
     - **Apple Inc.** es `AAPL`
     - **Microsoft Corp.** es `MSFT`
     - **Coca-Cola Co.** es `KO`
-
     Puedes encontrar el ticker de cualquier empresa buscándola en **Yahoo Finanzas**.
     """)
 
@@ -78,18 +68,11 @@ st.sidebar.subheader("Parámetros de Optimización y Backtesting")
 risk_free_rate = st.sidebar.number_input("Tasa Libre de Riesgo Anual (%)", value=2.0, step=0.1)
 risk_free_rate_decimal = risk_free_rate / 100.0
 
-# Se usa st.caption para añadir una breve descripción a cada opción.
 st.sidebar.write("**Seleccione una Opción:**")
 tipo_analisis = st.sidebar.radio("Tipo de Análisis", 
-    (
-        "Análisis Fundamental",                           
-        "Optimización de Portafolio (Markowitz)",       
-        "Análisis y Backtesting de Estrategia", 
-        "Análisis Técnico (Post-Optimización)",           
-        "Descargar Precios"                               
-    ), label_visibility="collapsed") # Oculta la etiqueta "Tipo de Análisis" para un look más limpio
+    ("Análisis Fundamental", "Optimización de Portafolio (Markowitz)", "Análisis y Backtesting de Estrategia", "Análisis Técnico (Post-Optimización)", "Descargar Precios"), 
+    label_visibility="collapsed")
 
-# Lógica para mostrar la descripción contextual de cada análisis.
 if tipo_analisis == "Análisis Fundamental":
     st.sidebar.caption("Evalúa la salud financiera y el valor intrínseco de las empresas para responder: **¿Qué comprar?**")
 elif tipo_analisis == "Optimización de Portafolio (Markowitz)":
@@ -99,41 +82,40 @@ elif tipo_analisis == "Análisis y Backtesting de Estrategia":
 elif tipo_analisis == "Análisis Técnico (Post-Optimización)":
     st.sidebar.caption("Analiza el momento del mercado para los activos de tu portafolio para responder: **¿Cuándo comprar?**")
 
-# Botón de acción principal.
 st.sidebar.markdown('<div class="cta-container">', unsafe_allow_html=True)
 run_button = st.sidebar.button("🚀 Ejecutar Análisis")
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
 
 # --- BLOQUE 3: ÁREA PRINCIPAL ---
-# Define el contenido del área principal de la página.
 
-# --- CAMBIO CLAVE: MENSAJE DE BIENVENIDA MEJORADO ---
-# Se crea un contenedor para el mensaje de bienvenida, que solo se mostrará si el botón no ha sido presionado.
-welcome_area = st.container()
-with welcome_area:
+# --- CAMBIO CLAVE 2: DIBUJADO CONDICIONAL DEL MENSAJE ---
+# El mensaje de bienvenida ahora solo se dibuja si nuestra bandera 'analysis_started' es False.
+if not st.session_state.analysis_started:
     st.title("Bienvenido a Analytix Pro")
     st.markdown("""
+    <div style="font-size: 24px;">
     Analytix Pro es su asistente de inversión personal, diseñado para guiarlo a través de un flujo de trabajo profesional para la toma de decisiones.
-
-    **Siga estos pasos para un análisis completo:**
-
-    1.  📊 **Análisis Fundamental:** Comience aquí para evaluar la calidad de las empresas que le interesan. **(¿Qué comprar?)**
-    2.  ⚖️ **Optimización de Portafolio:** Una vez que tenga sus empresas, descubra la mezcla perfecta para su portafolio. **(¿Cuánto comprar de cada una?)**
-    3.  🔬 **Análisis y Backtesting:** Valide su estrategia. Entienda su composición y compruebe su rendimiento histórico. **(¿Es una buena estrategia?)**
-    4.  📈 **Análisis Técnico:** Con su estrategia validada, determine el mejor momento para entrar al mercado. **(¿Cuándo comprar?)**
-
-    Use la **barra lateral** para configurar los parámetros y seleccionar un análisis. Luego, presione **'Ejecutar Análisis'**.
-    """)
+    <br><br>
+    <strong>Siga estos pasos para un análisis completo:</strong>
+    <ol>
+        <li><strong>📊 Análisis Fundamental:</strong> Comience aquí para evaluar la calidad de las empresas que le interesan. <em>(¿Qué comprar?)</em></li>
+        <li><strong>⚖️ Optimización de Portafolio:</strong> Una vez que tenga sus empresas, descubra la mezcla perfecta para su portafolio. <em>(¿Cuánto comprar de cada una?)</em></li>
+        <li><strong>🔬 Análisis y Backtesting:</strong> Valide su estrategia. Entienda su composición y compruebe su rendimiento histórico. <em>(¿Es una buena estrategia?)</em></li>
+        <li><strong>📈 Análisis Técnico:</strong> Con su estrategia validada, determine el mejor momento para entrar al mercado. <em>(¿Cuándo comprar?)</em></li>
+    </ol>
+    Use la <strong>barra lateral</strong> para configurar los parámetros y seleccionar un análisis. Luego, presione <strong>'Ejecutar Análisis'</strong>.
+    </div>
+    """, unsafe_allow_html=True)
     st.markdown("---")
 
 # --- BLOQUE 4: LÓGICA DE EJECUCIÓN ---
-# Este bloque se ejecuta solo cuando el usuario presiona el botón "Ejecutar Análisis".
 if run_button:
-    # Se oculta el mensaje de bienvenida para dar espacio a los resultados.
-    welcome_area.empty()
+    # --- CAMBIO CLAVE 3: ACTIVACIÓN DE LA BANDERA ---
+    # En cuanto se presiona el botón, ponemos la bandera en True.
+    # En la siguiente recarga, el bloque de bienvenida ya no se mostrará.
+    st.session_state.analysis_started = True
     
-    # --- BLOQUE 4.1: VALIDACIÓN DE TICKERS ---
     tickers_original = [ticker.strip().upper() for ticker in tickers_input.split(",")]
     valid_tickers, invalid_tickers, ticker_names = [], [], {}
     with st.spinner(f"Validando tickers..."):
@@ -151,11 +133,8 @@ if run_button:
         st.error("No hay tickers válidos para analizar.")
     else:
         st.success(f"Tickers válidos encontrados: {', '.join(valid_tickers)}")
-        
-        # --- BLOQUE 4.2: ENRUTAMIENTO DE ANÁLISIS ---
         if tipo_analisis == "Análisis Fundamental":
             fundamental_analysis.display_page(valid_tickers)
-            
         elif tipo_analisis == "Optimización de Portafolio (Markowitz)":
             with st.spinner("Descargando datos y optimizando portafolio..."):
                 all_prices = yf.download(valid_tickers, period=periodo, interval=intervalo, progress=False)
@@ -166,7 +145,6 @@ if run_button:
                     ef = EfficientFrontier(mu, S)
                     weights = ef.max_sharpe(risk_free_rate=risk_free_rate_decimal)
                     cleaned_weights = ef.clean_weights()
-                    
                     st.session_state.optimization_results = {
                         'all_prices': all_prices, 'ticker_names': ticker_names, 'valid_tickers': valid_tickers,
                         'weights': cleaned_weights, 'periodo': periodo, 'intervalo': intervalo, 
@@ -174,14 +152,12 @@ if run_button:
                     }
                     portfolio_optimization.display_page(close_prices, valid_tickers, frecuencia, risk_free_rate_decimal, ticker_names)
                 else: st.error("No se pudieron descargar datos de precios.")
-        
         elif tipo_analisis == "Análisis y Backtesting de Estrategia":
             if st.session_state.optimization_results and st.session_state.optimization_results.get('weights'):
                 st.info("Mostrando análisis y backtesting para el último portafolio optimizado.")
                 strategy_analysis.display_page(st.session_state.optimization_results)
             else:
                 st.error("Por favor, primero ejecute una 'Optimización de Portafolio' para poder realizar este análisis.")
-
         elif tipo_analisis == "Análisis Técnico (Post-Optimización)":
             if st.session_state.optimization_results and st.session_state.optimization_results.get('weights'):
                 st.info("Mostrando análisis técnico para el último portafolio optimizado.")
@@ -189,7 +165,6 @@ if run_button:
                 pesos_df = pd.DataFrame.from_dict(opt_data['weights'], orient='index', columns=['Peso'])
                 technical_analysis.display_page(pesos_df, opt_data['all_prices']['Close'], opt_data['ticker_names'])
             else: st.error("Primero ejecute una 'Optimización de Portafolio'.")
-            
         elif tipo_analisis == "Descargar Precios":
             st.header(f"Precios Históricos de Cierre")
             with st.spinner("Descargando datos de precios..."):

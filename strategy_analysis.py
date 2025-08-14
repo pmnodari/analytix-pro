@@ -1,4 +1,4 @@
-# strategy_analysis.py (Versión Estética FINAL con la corrección de visualización del gráfico)
+# strategy_analysis.py (Versión FINAL con la corrección de la caja de texto narrativa)
 
 # --- SECCIÓN 0: IMPORTACIONES ---
 import streamlit as st
@@ -75,27 +75,40 @@ def display_backtesting_analysis(all_prices, weights):
         col2.metric("Volatilidad Anual [%]", f"{stats.loc['monthly_vol', strategy_name] * (12**0.5) * 100:.2f}%")
         col3.metric("Max. Drawdown [%]", f"{stats.loc['max_drawdown', strategy_name] * 100:.2f}%", delta_color="inverse")
         col4.metric("Ratio de Sharpe Anual", f"{stats.loc['monthly_sharpe', strategy_name] * (12**0.5):.2f}")
-
-        st.write("**Gráfico de Crecimiento del Capital:**")
         
         # --- INICIO DE LA CORRECCIÓN FINAL ---
         
-        # 1. Usamos `plt.rcParams.update` para establecer los tamaños de fuente DESEADOS
-        #    ANTES de que se genere el gráfico. Esto es más seguro y estándar.
+        # 1. Creamos las dos partes del texto como antes.
+        retorno_total = stats.loc['total_return', strategy_name]
+        max_drawdown = stats.loc['max_drawdown', strategy_name]
+        capital_inicial = 10000
+        valor_final = capital_inicial * (1 + retorno_total)
+        
+        texto_principal = f"Si hubieras invertido **${capital_inicial:,.0f}** en esta estrategia, tu capital se habría convertido en **${valor_final:,.2f}**, obteniendo un retorno total del **{retorno_total:.2%}**."
+        
+        if max_drawdown > -0.10:
+            texto_riesgo = f"El riesgo asumido fue muy bajo, con una caída máxima desde el pico de solo un **{max_drawdown:.2%}**."
+        elif max_drawdown > -0.25:
+            texto_riesgo = f"Es importante notar que en el camino, tu portafolio habría experimentado una caída máxima desde su punto más alto de un **{max_drawdown:.2%}**, lo cual se considera un nivel de riesgo moderado."
+        else:
+            texto_riesgo = f"Esta estrategia no estuvo exenta de riesgo. En su peor momento, el portafolio llegó a caer un **{max_drawdown:.2%}** desde su punto más alto, lo que representa un nivel de riesgo significativo que el inversor debe estar dispuesto a tolerar."
+        
+        # 2. Mostramos el texto usando un st.markdown con HTML y CSS para crear nuestra propia "caja de información".
+        #    Esto nos da control total y evita los problemas de st.info.
+        st.markdown(f"""
+        <div style="background-color: #1a202c; border-left: 5px solid #3b82f6; padding: 15px; border-radius: 5px; margin: 15px 0px;">
+            <p style="margin-bottom: 10px; font-size: 16px;">{texto_principal}</p>
+            <p style="margin-bottom: 0; font-size: 16px;">{texto_riesgo}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        # --- FIN DE LA CORRECCIÓN FINAL ---
+
+        st.write("**Gráfico de Crecimiento del Capital:**")
         plt.rcParams.update({'font.size': 10, 'figure.figsize': (12, 6)})
-        
-        # 2. Llamamos a la función de ploteo de la librería `bt`. Ahora usará los
-        #    parámetros que acabamos de establecer.
         fig = results.plot()
-        
-        # 3. Le pasamos la figura a Streamlit para que la muestre.
         fig.grid(False)
         st.pyplot(plt.gcf())
-        
-        # 4. Limpiamos la figura para evitar que afecte a otros posibles gráficos.
         plt.clf()
-        
-        # --- FIN DE LA CORRECIÓN FINAL ---
 
 # --- SECCIÓN 3: FUNCIÓN PRINCIPAL DE VISUALIZACIÓN ---
 def display_page(opt_results):
