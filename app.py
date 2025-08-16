@@ -1,4 +1,4 @@
-# app.py (Versión Final con Lógica de Sesión para Bienvenida Dinámica)
+# app.py (Versión Final de Prototipo con Guía para el Usuario)
 
 # --- BLOQUE 1: IMPORTACIONES Y CONFIGURACIÓN ---
 import streamlit as st
@@ -18,13 +18,10 @@ st.set_page_config(page_title="Analytix Pro", layout="wide", initial_sidebar_sta
 if 'optimization_results' not in st.session_state:
     st.session_state.optimization_results = None
 
-# --- CAMBIO CLAVE 1: INICIALIZACIÓN DE LA BANDERA DE SESIÓN ---
-# Si nuestra bandera 'analysis_started' no existe en la memoria, la creamos y la ponemos en False.
 if 'analysis_started' not in st.session_state:
     st.session_state.analysis_started = False
 
 # --- BLOQUE 2: BARRA LATERAL (SIDEBAR) ---
-# --- BLOQUE 2.1: BANNER DE MARCA Y ESTILOS GLOBALES ---
 @st.cache_data
 def get_img_as_base64(file):
     with open(file, "rb") as f: data = f.read()
@@ -47,8 +44,6 @@ st.sidebar.markdown(f"""
     """, unsafe_allow_html=True)
 
 st.sidebar.header("Configuración de Análisis")
-
-# --- BLOQUE 2.2: ENTRADAS Y CONTROLES DEL USUARIO ---
 tickers_input = st.sidebar.text_input("Ingrese los Tickers (separados por comas)", "AAPL, MSFT, GOOGL, JPM, V")
 
 with st.sidebar.expander("💡 Ayuda: ¿Qué es un Ticker?"):
@@ -73,53 +68,35 @@ tipo_analisis = st.sidebar.radio("Tipo de Análisis",
     ("Análisis Fundamental", "Optimización de Portafolio (Markowitz)", "Análisis y Backtesting de Estrategia", "Análisis Técnico (Post-Optimización)", "Descargar Precios"), 
     label_visibility="collapsed")
 
-if tipo_analisis == "Análisis Fundamental":
-    st.sidebar.caption("Evalúa la salud financiera y el valor intrínseco de las empresas para responder: **¿Qué comprar?**")
-elif tipo_analisis == "Optimización de Portafolio (Markowitz)":
-    st.sidebar.caption("Calcula la combinación ideal de activos para maximizar el retorno ajustado al riesgo y responder: **¿Cuánto comprar?**")
-elif tipo_analisis == "Análisis y Backtesting de Estrategia":
-    st.sidebar.caption("Analiza la composición de tu portafolio y simula su rendimiento histórico para responder: **¿Por qué funciona esta estrategia?**")
-elif tipo_analisis == "Análisis Técnico (Post-Optimización)":
-    st.sidebar.caption("Analiza el momento del mercado para los activos de tu portafolio para responder: **¿Cuándo comprar?**")
+if tipo_analisis == "Análisis Fundamental": st.sidebar.caption("Evalúa la salud financiera y el valor intrínseco de las empresas para responder: **¿Qué comprar?**")
+elif tipo_analisis == "Optimización de Portafolio (Markowitz)": st.sidebar.caption("Calcula la combinación ideal de activos para maximizar el retorno ajustado al riesgo y responder: **¿Cuánto comprar?**")
+elif tipo_analisis == "Análisis y Backtesting de Estrategia": st.sidebar.caption("Analiza la composición de tu portafolio y simula su rendimiento histórico para responder: **¿Por qué funciona esta estrategia?**")
+elif tipo_analisis == "Análisis Técnico (Post-Optimización)": st.sidebar.caption("Analiza el momento del mercado para los activos de tu portafolio para responder: **¿Cuándo comprar?**")
 
 st.sidebar.markdown('<div class="cta-container">', unsafe_allow_html=True)
 run_button = st.sidebar.button("🚀 Ejecutar Análisis")
 st.sidebar.markdown('</div>', unsafe_allow_html=True)
 
-
-# --- BLOQUE 3: ÁREA PRINCIPAL ---
-
-# --- CAMBIO CLAVE 2: DIBUJADO CONDICIONAL DEL MENSAJE ---
-# El mensaje de bienvenida ahora solo se dibuja si nuestra bandera 'analysis_started' es False.
-if not st.session_state.analysis_started:
-    st.title("Bienvenido a Analytix Pro")
-    st.markdown("""
-    <div style="font-size: 18px;">
-    Analytix Pro es su asistente de inversión personal, diseñado para guiarlo a través de un flujo de trabajo profesional para la toma de decisiones.
-    <br><br>
-    <strong>Siga estos pasos para un análisis completo:</strong>
-    <ol>
-        <li><strong>📊 Análisis Fundamental:</strong> Comience aquí para evaluar la calidad de las empresas que le interesan. <em>(¿Qué comprar?)</em></li>
-        <li><strong>⚖️ Optimización de Portafolio:</strong> Una vez que tenga sus empresas, descubra la mezcla perfecta para su portafolio. <em>(¿Cuánto comprar de cada una?)</em></li>
-        <li><strong>🔬 Análisis y Backtesting:</strong> Valide su estrategia. Entienda su composición y compruebe su rendimiento histórico. <em>(¿Es una buena estrategia?)</em></li>
-        <li><strong>📈 Análisis Técnico:</strong> Con su estrategia validada, determine el mejor momento para entrar al mercado. <em>(¿Cuándo comprar?)</em></li>
-    </ol>
-    Use la <strong>barra lateral</strong> para configurar los parámetros y seleccionar un análisis. Luego, presione <strong>'Ejecutar Análisis'</strong>.
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown("---")
-
-    # --- BLOQUE 2.3: AVISO DE COPYRIGHT ---
 st.sidebar.markdown("---")
 st.sidebar.info("© 2025 Analytix Pro. Todos los derechos reservados.")
 
+# --- BLOQUE 3: ÁREA PRINCIPAL ---
+if not st.session_state.analysis_started:
+    st.title("Bienvenido a Analytix Pro")
+    st.markdown("""
+    Analytix Pro es su asistente de inversión personal, diseñado para guiarlo a través de un flujo de trabajo profesional para la toma de decisiones.
+    **Siga estos pasos para un análisis completo:**
+    1.  📊 **Análisis Fundamental:** Comience aquí para evaluar la calidad de las empresas que le interesan. **(¿Qué comprar?)**
+    2.  ⚖️ **Optimización de Portafolio:** Una vez que tenga sus empresas, descubra la mezcla perfecta para su portafolio. **(¿Cuánto comprar de cada una?)**
+    3.  🔬 **Análisis y Backtesting:** Valide su estrategia. Entienda su composición y compruebe su rendimiento histórico. **(¿Es una buena estrategia?)**
+    4.  📈 **Análisis Técnico:** Con su estrategia validada, determine el mejor momento para entrar al mercado. **(¿Cuándo comprar?)**
+    Use la **barra lateral** para configurar los parámetros y seleccionar un análisis. Luego, presione **'Ejecutar Análisis'**.
+    """)
+    st.markdown("---")
+
 # --- BLOQUE 4: LÓGICA DE EJECUCIÓN ---
 if run_button:
-    # --- CAMBIO CLAVE 3: ACTIVACIÓN DE LA BANDERA ---
-    # En cuanto se presiona el botón, ponemos la bandera en True.
-    # En la siguiente recarga, el bloque de bienvenida ya no se mostrará.
     st.session_state.analysis_started = True
-    
     tickers_original = [ticker.strip().upper() for ticker in tickers_input.split(",")]
     valid_tickers, invalid_tickers, ticker_names = [], [], {}
     with st.spinner(f"Validando tickers..."):

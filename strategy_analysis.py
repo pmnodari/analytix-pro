@@ -1,4 +1,4 @@
-# strategy_analysis.py (Versión FINAL con la corrección de la caja de texto narrativa)
+# strategy_analysis.py (Versión FINAL con la Narrativa del Backtesting Restaurada)
 
 # --- SECCIÓN 0: IMPORTACIONES ---
 import streamlit as st
@@ -37,17 +37,20 @@ def display_sector_analysis(weights, tickers):
     with col2:
         st.write("**Análisis IA de la Composición:**")
         sector_allocation = sector_allocation.sort_values(by='Peso', ascending=False)
-        lider = sector_allocation.iloc[0]
-        narrativa = f"Su portafolio muestra una estrategia con una asignación principal en el sector **{lider['Sector']}**, que representa un **{lider['Peso']:.1%}** del total. "
-        if lider['Peso'] > 0.5: narrativa += "Esta es una **alta concentración**, que puede generar mayores retornos si el sector tiene un buen desempeño, pero también incrementa el riesgo específico del sector. "
-        elif lider['Peso'] > 0.3: narrativa += "Esta es una **concentración significativa**, indicando una fuerte convicción en el potencial de este sector. "
-        if len(sector_allocation) > 2:
-            secundario = sector_allocation.iloc[1]
-            narrativa += f"La exposición se diversifica con una asignación del **{secundario['Peso']:.1%}** al sector **{secundario['Sector']}**, que actúa como un contrapeso y ayuda a mitigar la volatilidad."
-        elif len(sector_allocation) == 2:
-            secundario = sector_allocation.iloc[1]
-            narrativa += f"El resto del portafolio se asigna al sector **{secundario['Sector']}** ({secundario['Peso']:.1%}), creando un portafolio enfocado en dos áreas principales."
-        st.markdown(f'<div style="font-size: 16px; text-align: justify;">{narrativa}</div>', unsafe_allow_html=True)
+        if not sector_allocation.empty:
+            lider = sector_allocation.iloc[0]
+            narrativa = f"Su portafolio muestra una estrategia con una asignación principal en el sector **{lider['Sector']}**, que representa un **{lider['Peso']:.1%}** del total. "
+            if lider['Peso'] > 0.5: narrativa += "Esta es una **alta concentración**, que puede generar mayores retornos si el sector tiene un buen desempeño, pero también incrementa el riesgo específico del sector. "
+            elif lider['Peso'] > 0.3: narrativa += "Esta es una **concentración significativa**, indicando una fuerte convicción en el potencial de este sector. "
+            if len(sector_allocation) > 2:
+                secundario = sector_allocation.iloc[1]
+                narrativa += f"La exposición se diversifica con una asignación del **{secundario['Peso']:.1%}** al sector **{secundario['Sector']}**, que actúa como un contrapeso y ayuda a mitigar la volatilidad."
+            elif len(sector_allocation) == 2:
+                secundario = sector_allocation.iloc[1]
+                narrativa += f"El resto del portafolio se asigna al sector **{secundario['Sector']}** ({secundario['Peso']:.1%}), creando un portafolio enfocado en dos áreas principales."
+            st.markdown(f'<div style="font-size: 16px; text-align: justify;">{narrativa}</div>', unsafe_allow_html=True)
+        else:
+            st.info("No hay asignaciones sectoriales para mostrar.")
 
 # --- SECCIÓN 2: SIMULACIÓN HISTÓRICA (BACKTESTING CON `bt`) ---
 def run_backtest_bt(close_prices, weights):
@@ -76,32 +79,33 @@ def display_backtesting_analysis(all_prices, weights):
         col3.metric("Max. Drawdown [%]", f"{stats.loc['max_drawdown', strategy_name] * 100:.2f}%", delta_color="inverse")
         col4.metric("Ratio de Sharpe Anual", f"{stats.loc['monthly_sharpe', strategy_name] * (12**0.5):.2f}")
         
-        # --- INICIO DE LA CORRECCIÓN FINAL ---
+        # --- INICIO DEL CAMBIO: RESTAURACIÓN DE LA NARRATIVA ---
         
-        # 1. Creamos las dos partes del texto como antes.
+        # 1. Se extraen los datos necesarios para la narrativa desde el DataFrame de estadísticas.
         retorno_total = stats.loc['total_return', strategy_name]
         max_drawdown = stats.loc['max_drawdown', strategy_name]
         capital_inicial = 10000
         valor_final = capital_inicial * (1 + retorno_total)
         
+        # 2. Se construye el texto principal que traduce el retorno a dinero.
         texto_principal = f"Si hubieras invertido **${capital_inicial:,.0f}** en esta estrategia, tu capital se habría convertido en **${valor_final:,.2f}**, obteniendo un retorno total del **{retorno_total:.2%}**."
         
-        if max_drawdown > -0.10:
+        # 3. Se construye un texto contextual sobre el riesgo, adaptado al nivel de Max Drawdown.
+        if max_drawdown > -0.10: # Caída menor al 10%
             texto_riesgo = f"El riesgo asumido fue muy bajo, con una caída máxima desde el pico de solo un **{max_drawdown:.2%}**."
-        elif max_drawdown > -0.25:
+        elif max_drawdown > -0.25: # Caída entre 10% y 25%
             texto_riesgo = f"Es importante notar que en el camino, tu portafolio habría experimentado una caída máxima desde su punto más alto de un **{max_drawdown:.2%}**, lo cual se considera un nivel de riesgo moderado."
-        else:
+        else: # Caída mayor al 25%
             texto_riesgo = f"Esta estrategia no estuvo exenta de riesgo. En su peor momento, el portafolio llegó a caer un **{max_drawdown:.2%}** desde su punto más alto, lo que representa un nivel de riesgo significativo que el inversor debe estar dispuesto a tolerar."
         
-        # 2. Mostramos el texto usando un st.markdown con HTML y CSS para crear nuestra propia "caja de información".
-        #    Esto nos da control total y evita los problemas de st.info.
+        # 4. Se muestra la narrativa en una caja de información personalizada usando HTML/CSS.
         st.markdown(f"""
-        <div style="background-color: #1a202c; border-left: 5px solid #3b82f6; padding: 15px; border-radius: 5px; margin: 15px 0px;">
+        <div style="background-color: #1a202c; border-left: 5px solid #3b82f6; padding: 15px; border-radius: 5px; margin: 20px 0px;">
             <p style="margin-bottom: 10px; font-size: 16px;">{texto_principal}</p>
             <p style="margin-bottom: 0; font-size: 16px;">{texto_riesgo}</p>
         </div>
         """, unsafe_allow_html=True)
-        # --- FIN DE LA CORRECCIÓN FINAL ---
+        # --- FIN DEL CAMBIO ---
 
         st.write("**Gráfico de Crecimiento del Capital:**")
         plt.rcParams.update({'font.size': 10, 'figure.figsize': (12, 6)})
